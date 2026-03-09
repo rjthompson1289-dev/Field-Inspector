@@ -1417,7 +1417,153 @@ function renderRoomForm(idx) {
   const SHINGLE_COMP = 'Shingles';
   const SECTION_HEADERS = ['── ROOF ──', '── EXTERIOR ──'];
 
-  if (lt === 'theft') {
+  if (lt === 'water') {
+    // ── Water: single Affected Components card ──
+    var WATER_GRADED  = ['Cabinet — lower', 'Cabinet — upper'];
+    var WATER_SPECIAL = ['Ceiling — drywall','Walls — drywall','Walls — plaster',
+                         'Wall paneling','Baseboard / trim','Countertop',
+                         'Flooring — carpet','Flooring — vinyl / LVP',
+                         'Flooring — vinyl / LVP — sheet','Windows'];
+
+    function renderWaterComp(comp) {
+      var checked = d.components && d.components.indexOf(comp) >= 0;
+      var cm      = d.compMeasures && d.compMeasures[comp] ? d.compMeasures[comp] : {};
+      var hasDetail = cm.qty || cm.unit || cm.status;
+      var extras  = d.compExtras && d.compExtras[comp] ? d.compExtras[comp] : {};
+      var h = '';
+
+      if (WATER_GRADED.includes(comp)) {
+        var savedGrade = d.compGrades && d.compGrades[comp] ? d.compGrades[comp] : '';
+        h += '<div class="comp-mwrap" data-comp="' + comp + '" style="margin-bottom:4px;">';
+        h += '<div class="comp-grade-row" style="display:flex;align-items:center;gap:8px;background:var(--card);border-radius:10px;padding:8px 10px;">';
+        h += '<label class="check-item' + (checked?' checked':'') + '" style="flex:1;margin:0;background:none;padding:0;">';
+        h += '<input type="checkbox" class="comp-check" value="' + comp + '" ' + (checked?'checked':'') + '>';
+        h += '<div class="check-box">' + (checked?'✓':'') + '</div>';
+        h += '<span class="check-label">' + comp + '</span></label>';
+        h += '<select class="comp-grade-select" data-comp="' + comp + '" style="font-size:13px;padding:6px 8px;border-radius:8px;border:1.5px solid var(--rule);background:var(--bg);color:var(--text);min-width:110px;">';
+        h += '<option value="">Grade...</option>';
+        CAB_GRADES.forEach(function(g){ h += '<option value="' + g + '"' + (savedGrade===g?' selected':'') + '>' + g + '</option>'; });
+        h += '</select>';
+        h += '<button onclick="toggleMeasure(this)" style="flex-shrink:0;background:none;border:1px solid var(--rule);border-radius:6px;padding:2px 7px;font-size:11px;color:var(--muted);cursor:pointer;">' + (hasDetail?'▴ qty':'▾ qty') + '</button>';
+        h += '</div>';
+        h += '<div class="comp-mdetail" style="display:' + (hasDetail?'flex':'none') + ';gap:6px;margin-top:5px;padding-left:34px;align-items:center;flex-wrap:wrap;">';
+        h += '<input type="number" class="field-input comp-qty" data-comp="' + comp + '" value="' + (cm.qty||'') + '" placeholder="Qty" inputmode="decimal" style="width:60px;font-size:13px;padding:6px 8px;">';
+        h += '<select class="comp-unit" data-comp="' + comp + '" style="font-size:13px;padding:6px 8px;border-radius:8px;border:1.5px solid var(--rule);background:var(--bg);color:var(--text);">';
+        ['SF','LF','EA'].forEach(function(u){ h += '<option value="' + u + '"' + (cm.unit===u?' selected':'') + '>' + u + '</option>'; });
+        h += '</select>';
+        h += '<select class="comp-status" data-comp="' + comp + '" style="font-size:13px;padding:6px 8px;border-radius:8px;border:1.5px solid var(--rule);background:var(--bg);color:var(--text);">';
+        h += '<option value="">Condition</option>';
+        ['Removed','Detached','In place - damaged','N/A'].forEach(function(s){ h += '<option value="' + s + '"' + (cm.status===s?' selected':'') + '>' + s + '</option>'; });
+        h += '</select></div>';
+        h += '</div>';
+
+      } else if (WATER_SPECIAL.includes(comp)) {
+        h += '<div class="comp-mwrap" data-comp="' + comp + '" style="margin-bottom:4px;">';
+        h += '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;background:var(--card);border-radius:10px;padding:8px 10px;">';
+        h += '<label class="check-item' + (checked?' checked':'') + '" style="flex:1;min-width:120px;margin:0;">';
+        h += '<input type="checkbox" class="comp-check" value="' + comp + '" ' + (checked?'checked':'') + '>';
+        h += '<div class="check-box">' + (checked?'&#10003;':'') + '</div>';
+        h += '<span class="check-label">' + comp + '</span></label>';
+        if (['Ceiling — drywall','Walls — drywall','Walls — plaster'].includes(comp)) {
+          var selTex = extras.texture || '';
+          h += '<select class="comp-extra" data-comp="' + comp + '" data-key="texture" style="font-size:12px;padding:5px 7px;border-radius:8px;border:1.5px solid var(--rule);background:var(--bg);color:var(--text);min-width:130px;">';
+          h += '<option value="">Texture...</option>';
+          TEXTURES.forEach(function(t){ h += '<option value="' + t + '"' + (selTex===t?' selected':'') + '>' + t + '</option>'; });
+          h += '</select>';
+        }
+        if (comp === 'Baseboard / trim') {
+          var selBB = extras.material || '';
+          h += '<select class="comp-extra" data-comp="' + comp + '" data-key="material" style="font-size:12px;padding:5px 7px;border-radius:8px;border:1.5px solid var(--rule);background:var(--bg);color:var(--text);min-width:100px;">';
+          h += '<option value="">Material...</option>';
+          BASEBOARD_GRADES.forEach(function(g){ h += '<option value="' + g + '"' + (selBB===g?' selected':'') + '>' + g + '</option>'; });
+          h += '</select>';
+        }
+        if (comp === 'Countertop') {
+          var selCT = extras.material || '';
+          h += '<select class="comp-extra" data-comp="' + comp + '" data-key="material" style="font-size:12px;padding:5px 7px;border-radius:8px;border:1.5px solid var(--rule);background:var(--bg);color:var(--text);min-width:130px;">';
+          h += '<option value="">Material...</option>';
+          COUNTERTOP_TYPES.forEach(function(m){ h += '<option value="' + m + '"' + (selCT===m?' selected':'') + '>' + m + '</option>'; });
+          h += '</select>';
+        }
+        if (comp === 'Flooring — carpet') {
+          var selCM = extras.carpetMaterial || ''; var selPad = extras.pad || '';
+          h += '<select class="comp-extra" data-comp="' + comp + '" data-key="carpetMaterial" style="font-size:12px;padding:5px 7px;border-radius:8px;border:1.5px solid var(--rule);background:var(--bg);color:var(--text);min-width:120px;">';
+          h += '<option value="">Material...</option>';
+          ['Berber','Cut pile / plush','Frieze / shag','Loop pile','Pattern / cut-loop','Other'].forEach(function(m){ h += '<option value="' + m + '"' + (selCM===m?' selected':'') + '>' + m + '</option>'; });
+          h += '</select>';
+          h += '<select class="comp-extra" data-comp="' + comp + '" data-key="pad" style="font-size:12px;padding:5px 7px;border-radius:8px;border:1.5px solid var(--rule);background:var(--bg);color:var(--text);min-width:100px;">';
+          h += '<option value="">Pad...</option>';
+          CARPET_PADS.forEach(function(p){ h += '<option value="' + p + '"' + (selPad===p?' selected':'') + '>' + p + '</option>'; });
+          h += '</select>';
+        }
+        if (comp === 'Flooring — vinyl / LVP' || comp === 'Flooring — vinyl / LVP — sheet') {
+          var selVT = extras.material || '';
+          h += '<select class="comp-extra" data-comp="' + comp + '" data-key="material" style="font-size:12px;padding:5px 7px;border-radius:8px;border:1.5px solid var(--rule);background:var(--bg);color:var(--text);min-width:120px;">';
+          h += '<option value="">Type...</option>';
+          ['LVP plank','LVT tile','Sheet vinyl','Other'].forEach(function(m){ h += '<option value="' + m + '"' + (selVT===m?' selected':'') + '>' + m + '</option>'; });
+          h += '</select>';
+        }
+        if (comp === 'Wall paneling') {
+          var selWP = extras.finish || '';
+          h += '<select class="comp-extra" data-comp="' + comp + '" data-key="finish" style="font-size:12px;padding:5px 7px;border-radius:8px;border:1.5px solid var(--rule);background:var(--bg);color:var(--text);min-width:100px;">';
+          h += '<option value="">Finish...</option>';
+          ['Stained','Painted','N/A'].forEach(function(f){ h += '<option value="' + f + '"' + (selWP===f?' selected':'') + '>' + f + '</option>'; });
+          h += '</select>';
+        }
+        if (comp === 'Windows') {
+          var selWT = extras.type || ''; var selWF = extras.frame || '';
+          h += '<select class="comp-extra" data-comp="' + comp + '" data-key="type" style="font-size:12px;padding:5px 7px;border-radius:8px;border:1.5px solid var(--rule);background:var(--bg);color:var(--text);min-width:110px;">';
+          h += '<option value="">Pane...</option>';
+          WINDOW_TYPES.forEach(function(t){ h += '<option value="' + t + '"' + (selWT===t?' selected':'') + '>' + t + '</option>'; });
+          h += '</select>';
+          h += '<select class="comp-extra" data-comp="' + comp + '" data-key="frame" style="font-size:12px;padding:5px 7px;border-radius:8px;border:1.5px solid var(--rule);background:var(--bg);color:var(--text);min-width:110px;">';
+          h += '<option value="">Frame...</option>';
+          WINDOW_FRAMES.forEach(function(f){ h += '<option value="' + f + '"' + (selWF===f?' selected':'') + '>' + f + '</option>'; });
+          h += '</select>';
+        }
+        h += '<button onclick="toggleMeasure(this)" style="flex-shrink:0;background:none;border:1px solid var(--rule);border-radius:6px;padding:2px 7px;font-size:11px;color:var(--muted);cursor:pointer;">' + (hasDetail?'&#9652; qty':'&#9662; qty') + '</button>';
+        h += '</div>';
+        h += '<div class="comp-mdetail" style="display:' + (hasDetail?'flex':'none') + ';gap:6px;margin-top:5px;padding-left:34px;align-items:center;flex-wrap:wrap;">';
+        h += '<input type="number" class="field-input comp-qty" data-comp="' + comp + '" value="' + (cm.qty||'') + '" placeholder="Qty" inputmode="decimal" style="width:60px;font-size:13px;padding:6px 8px;">';
+        h += '<select class="comp-unit" data-comp="' + comp + '" style="font-size:13px;padding:6px 8px;border-radius:8px;border:1.5px solid var(--rule);background:var(--bg);color:var(--text);">';
+        ['SF','LF','EA'].forEach(function(u){ h += '<option value="' + u + '"' + (cm.unit===u?' selected':'') + '>' + u + '</option>'; });
+        h += '</select>';
+        h += '<select class="comp-status" data-comp="' + comp + '" style="font-size:13px;padding:6px 8px;border-radius:8px;border:1.5px solid var(--rule);background:var(--bg);color:var(--text);">';
+        h += '<option value="">Condition</option>';
+        ['Removed','Detached','In place - damaged','N/A'].forEach(function(s){ h += '<option value="' + s + '"' + (cm.status===s?' selected':'') + '>' + s + '</option>'; });
+        h += '</select></div>';
+        h += '</div>';
+
+      } else {
+        h += '<div class="comp-mwrap" data-comp="' + comp + '" style="margin-bottom:4px;">';
+        h += '<div style="display:flex;align-items:center;gap:6px;background:var(--card);border-radius:10px;padding:8px 10px;">';
+        h += '<label class="check-item' + (checked?' checked':'') + '" style="flex:1;margin:0;">';
+        h += '<input type="checkbox" class="comp-check" value="' + comp + '" ' + (checked?'checked':'') + '>';
+        h += '<div class="check-box">' + (checked?'&#10003;':'') + '</div>';
+        h += '<span class="check-label">' + comp + '</span></label>';
+        h += '<button onclick="toggleMeasure(this)" style="flex-shrink:0;background:none;border:1px solid var(--rule);border-radius:6px;padding:2px 7px;font-size:11px;color:var(--muted);cursor:pointer;">' + (hasDetail?'&#9652; qty':'&#9662; qty') + '</button>';
+        h += '</div>';
+        h += '<div class="comp-mdetail" style="display:' + (hasDetail?'flex':'none') + ';gap:6px;margin-top:5px;padding-left:34px;align-items:center;flex-wrap:wrap;">';
+        h += '<input type="number" class="field-input comp-qty" data-comp="' + comp + '" value="' + (cm.qty||'') + '" placeholder="Qty" inputmode="decimal" style="width:60px;font-size:13px;padding:6px 8px;">';
+        h += '<select class="comp-unit" data-comp="' + comp + '" style="font-size:13px;padding:6px 8px;border-radius:8px;border:1.5px solid var(--rule);background:var(--bg);color:var(--text);">';
+        ['SF','LF','EA'].forEach(function(u){ h += '<option value="' + u + '"' + (cm.unit===u?' selected':'') + '>' + u + '</option>'; });
+        h += '</select>';
+        h += '<select class="comp-status" data-comp="' + comp + '" style="font-size:13px;padding:6px 8px;border-radius:8px;border:1.5px solid var(--rule);background:var(--bg);color:var(--text);">';
+        h += '<option value="">Condition</option>';
+        ['Removed','Detached','In place - damaged','N/A'].forEach(function(s){ h += '<option value="' + s + '"' + (cm.status===s?' selected':'') + '>' + s + '</option>'; });
+        h += '</select></div>';
+        h += '</div>';
+      }
+      return h;
+    }
+
+    html += '<div class="card" style="margin-bottom:12px;">';
+    html += '<div class="card-header"><span class="card-title">💧 Affected Components</span></div>';
+    html += '<div class="card-body">';
+    COMPONENTS.water.forEach(function(comp){ html += renderWaterComp(comp); });
+    html += '</div></div>';
+
+  } else if (lt === 'theft') {
     // ── Theft: three-section water-style component cards ──
     var THEFT_GRADED  = ['Cabinet — lower','Cabinet — upper'];
     var THEFT_SPECIAL = ['Baseboard / trim','Countertop','Flooring — carpet',
